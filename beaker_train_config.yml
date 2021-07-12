@@ -1,0 +1,49 @@
+version: v2-alpha
+description: Run of LED on {{.Env.DATA_DS}}
+tasks:
+  - image:
+      beaker: {{.Env.IMG}}
+    arguments:
+      - python train_qa.py
+      - --fp16
+      - --batch_size
+      - 16
+      - --grad_accum
+      - 1
+      - --grad_ckpt
+      - --max_input_len
+      - 2200
+      - --attention_window
+      - 1024
+      - --data_dir
+      - /input/
+      - --output_dir
+      - /output/
+      - --max_output_len
+      - 64
+      - --epochs
+      - 5
+      - --lr
+      - 0.00003
+      - --warmup
+      - 1000
+    envVars:
+      - name: TOKENIZERS_PARALLELISM
+        value: false
+      - name: PYTHONWARNINGS
+        value: "ignore"
+      - name: DATA_DIR
+        value: "/input/"
+      - name: OUT_DIR
+        value: "/output/"
+    datasets:
+      - mountPath: /input
+        source:
+          beaker: {{.Env.DATA_DS}}
+    result:
+      path: /output
+    resources:
+      gpuCount: 1
+    context:
+      cluster: ai2/on-prem-ai2-server
+      priority: normal
