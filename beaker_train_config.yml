@@ -4,7 +4,10 @@ tasks:
   - image:
       beaker: {{.Env.IMG}}
     arguments:
-      - python train_qa.py
+      - python
+      - train_qa.py
+      - --model_name
+      - "allenai/led-base-16384"
       - --fp16
       - --batch_size
       - 16

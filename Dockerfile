@@ -21,6 +21,7 @@ RUN pip install torch torchvision torchaudio
 COPY requirements.txt .
 RUN pip install -r requirements.txt
 
+COPY . .
 LABEL maintainer="tushark@allenai.org"
 
 CMD ["/bin/bash"]
