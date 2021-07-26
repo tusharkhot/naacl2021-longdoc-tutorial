@@ -7,15 +7,15 @@ tasks:
       - python
       - train_qa.py
       - --model_name
-      - "allenai/led-base-16384"
+      - "allenai/led-large-16384"
       - --fp16
       - --batch_size
-      - 16
+      - 4
       - --grad_accum
-      - 1
+      - 4
       - --grad_ckpt
       - --max_input_len
-      - 2200
+      - 2800
       - --attention_window
       - 1024
       - --data_dir
@@ -23,7 +23,7 @@ tasks:
       - --output_dir
       - /output/
       - --max_output_len
-      - 64
+      - 72
       - --epochs
       - 5
       - --lr

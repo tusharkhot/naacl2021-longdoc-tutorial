@@ -53,6 +53,10 @@ class QuestionAnswerer(pl.LightningModule):
 
         # Load and update config then load a pretrained LEDForConditionalGeneration
         config = AutoConfig.from_pretrained(self.args.model_name)
+        if self.args.model_name == "allenai/led-large-16384":
+            del config.prefix
+            del config._num_labels
+            del config.output_past
         config.gradient_checkpointing = self.args.grad_ckpt
         config.attention_window = [self.args.attention_window] * len(config.attention_window)
         self.model = AutoModelForSeq2SeqLM.from_pretrained(self.args.model_name, config=config)
