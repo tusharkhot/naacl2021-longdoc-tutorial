@@ -157,7 +157,9 @@ class QuestionAnswerer(pl.LightningModule):
         # Convert predicted and gold token ids to strings
         predictions = self.tokenizer.batch_decode(generated_ids.tolist(), skip_special_tokens=True)
         references = self.tokenizer.batch_decode(output_ids.tolist(), skip_special_tokens=True)
-
+        if batch_nb == 1:
+            print("Pred:" + str(predictions))
+            print("Ref:" + str(references))
         # Compute rouge
         metric_names = ['rouge1', 'rouge2', 'rougeL', 'rougeLsum']
         results = self.rouge.compute(predictions=predictions, references=references)
