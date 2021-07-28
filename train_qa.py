@@ -53,10 +53,10 @@ class QuestionAnswerer(pl.LightningModule):
 
         # Load and update config then load a pretrained LEDForConditionalGeneration
         config = AutoConfig.from_pretrained(self.args.model_name)
-        #if self.args.model_name == "allenai/led-large-16384":
-        #    del config.prefix
-        #    del config._num_labels
-        #    del config.output_past
+        if self.args.model_name == "allenai/led-large-16384":
+            del config.prefix
+            del config._num_labels
+            del config.output_past
         config.gradient_checkpointing = self.args.grad_ckpt
         config.attention_window = [self.args.attention_window] * len(config.attention_window)
         self.model = AutoModelForSeq2SeqLM.from_pretrained(self.args.model_name, config=config)
@@ -158,6 +158,7 @@ class QuestionAnswerer(pl.LightningModule):
         predictions = self.tokenizer.batch_decode(generated_ids.tolist(), skip_special_tokens=True)
         references = self.tokenizer.batch_decode(output_ids.tolist(), skip_special_tokens=True)
         if batch_nb == 1:
+            print("Ids: " + str(input_ids))
             print("Pred:" + str(predictions))
             print("Ref:" + str(references))
         # Compute rouge
@@ -189,11 +190,13 @@ class QuestionAnswerer(pl.LightningModule):
         parser.add_argument("--max_input_len", type=int, default=8192, help="maximum num of wordpieces in the input")
         parser.add_argument("--batch_size", type=int, default=2, help="Batch size")
         parser.add_argument("--grad_accum", type=int, default=1, help="number of gradient accumulation steps")
+        parser.add_argument("--only_eval", action='store_true', help="Only run evaluation")
         parser.add_argument("--fp16", action='store_true', help="Use fp16 ")
         parser.add_argument('--grad_ckpt', action='store_true', help='Enable gradient checkpointing to save memory')
         parser.add_argument("--attention_window", type=int, default=1024, help="Attention window")
         parser.add_argument("--data_dir", type=str, help="Data directory containing the jsonl files")
         parser.add_argument("--model_name", type=str, help="LED Model name", default="allenai/led-base-16384")
+        parser.add_argument("--checkpoint_name", type=str, help="Load checkpoint", default=None)
         return parser
 
 
@@ -205,7 +208,10 @@ if __name__ == "__main__":
 
     # Init a PL module
     set_seed(args.seed)
-    question_answerer = QuestionAnswerer(args)
+    if args.checkpoint_name is not None:
+        question_answerer = QuestionAnswerer.load_from_checkpoint(args.checkpoint_name, params=args)
+    else:
+        question_answerer = QuestionAnswerer(args)
 
     # Load the arXiv dataset from HF datasets
     question_answerer.hf_dataset = datasets.load_dataset('json', data_files={'train': [args.data_dir + '/train.jsonl'],
@@ -240,11 +246,15 @@ if __name__ == "__main__":
                          callbacks=[checkpoint_callback],
                          val_check_interval=args.val_every
                          )
-    # Start training
-    trainer.fit(question_answerer)
+    if not args.only_eval:
+        # Start training
+        trainer.fit(question_answerer)
 
     # Start testing
-    result = trainer.test()
+    if args.only_eval:
+        result = trainer.test(model=question_answerer)
+    else:
+        result = trainer.test()
     print(result)
 
 '''

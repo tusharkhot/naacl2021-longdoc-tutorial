@@ -7,7 +7,7 @@ tasks:
       - python
       - train_qa.py
       - --model_name
-      - "allenai/led-large-16384"
+      - "allenai/led-base-16384"
       - --fp16
       - --batch_size
       - 4
